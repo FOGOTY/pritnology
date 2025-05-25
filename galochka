@@ -1,4 +1,4 @@
-_G.zhir = false
+_G.zhir = not _G.zhir
 if _G.zhir == false then
 	_G.zhir = true
 	game.Players.LocalPlayer.Humanoid.WalkSpeed = 100
