@@ -1,0 +1,62 @@
+-- Toggle ESP
+_G.esp = not _G.esp
+if _G.zhir then
+	_G.zhir = true
+else
+	_G.zhir = false
+end
+
+-- Clear previous ESP drawings
+if _G.espObjects then
+	for _, obj in pairs(_G.espObjects) do
+		if obj.Box then obj.Box:Remove() end
+	end
+end
+
+_G.espObjects = {}
+
+-- Function to create a box drawing
+local function createBox()
+	local box = Drawing.new("Square")
+	box.Thickness = 1
+	box.Color = Color3.fromRGB(255, 0, 0)
+	box.Transparency = 1
+	box.Filled = false
+	box.Visible = false
+	return box
+end
+
+-- Main loop
+spawn(function()
+	while _G.esp do
+		for _, player in pairs(game.Players:GetPlayers()) do
+			if player ~= game.Players.LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+				local hrp = player.Character.HumanoidRootPart
+				local pos, onScreen = workspace.CurrentCamera:WorldToViewportPoint(hrp.Position)
+
+				if not _G.espObjects[player] then
+					_G.espObjects[player] = { Box = createBox() }
+				end
+
+				local box = _G.espObjects[player].Box
+				if onScreen then
+					local size = Vector2.new(60, 100) -- box size
+					box.Size = size
+					box.Position = Vector2.new(pos.X - size.X / 2, pos.Y - size.Y / 2)
+					box.Visible = true
+				else
+					box.Visible = false
+				end
+			elseif _G.espObjects[player] then
+				_G.espObjects[player].Box.Visible = false
+			end
+		end
+		wait(0.01)
+	end
+
+	-- Clean up when _G.esp is turned off
+	for _, obj in pairs(_G.espObjects) do
+		if obj.Box then obj.Box:Remove() end
+	end
+	_G.espObjects = nil
+end)
