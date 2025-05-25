@@ -1,0 +1,90 @@
+-- Toggle Fly
+_G.fly = not _G.fly
+if _G.zhir then
+    _G.zhir = true
+else
+    _G.zhir = false
+end
+
+-- Cleanup if already flying
+if _G.flyParts then
+    if _G.flyParts.bv then _G.flyParts.bv:Destroy() end
+    if _G.flyParts.bg then _G.flyParts.bg:Destroy() end
+    _G.flyParts = nil
+end
+
+-- Start fly logic
+if _G.fly then
+    local player = game.Players.LocalPlayer
+    local char = player.Character or player.CharacterAdded:Wait()
+    local hrp = char:WaitForChild("HumanoidRootPart")
+    local uis = game:GetService("UserInputService")
+    local rs = game:GetService("RunService")
+
+    local bv = Instance.new("BodyVelocity")
+    bv.MaxForce = Vector3.new(1e9, 1e9, 1e9)
+    bv.Velocity = Vector3.new()
+    bv.Parent = hrp
+
+    local bg = Instance.new("BodyGyro")
+    bg.MaxTorque = Vector3.new(1e9, 1e9, 1e9)
+    bg.CFrame = hrp.CFrame
+    bg.P = 9e4
+    bg.Parent = hrp
+
+    _G.flyParts = { bv = bv, bg = bg }
+
+    local flying = true
+    local speed = 50
+    local move = Vector3.new()
+
+    local keyState = {
+        W = false,
+        A = false,
+        S = false,
+        D = false,
+        Space = false
+    }
+
+    -- Input
+    uis.InputBegan:Connect(function(input, gpe)
+        if gpe then return end
+        local key = input.KeyCode.Name
+        if keyState[key] ~= nil then keyState[key] = true end
+    end)
+
+    uis.InputEnded:Connect(function(input)
+        local key = input.KeyCode.Name
+        if keyState[key] ~= nil then keyState[key] = false end
+    end)
+
+    -- Main Fly Loop
+    spawn(function()
+        while _G.fly and flying do
+            move = Vector3.new()
+
+            if keyState.W then move = move + workspace.CurrentCamera.CFrame.LookVector end
+            if keyState.S then move = move - workspace.CurrentCamera.CFrame.LookVector end
+            if keyState.A then move = move - workspace.CurrentCamera.CFrame.RightVector end
+            if keyState.D then move = move + workspace.CurrentCamera.CFrame.RightVector end
+            if keyState.Space then move = move + workspace.CurrentCamera.CFrame.UpVector end
+
+            move = move.Unit * speed
+            if move.Magnitude ~= move.Magnitude then
+                move = Vector3.zero -- NaN protection
+            end
+
+            bv.Velocity = move
+            bg.CFrame = workspace.CurrentCamera.CFrame
+
+            rs.RenderStepped:Wait()
+        end
+
+        -- Clean up
+        if _G.flyParts then
+            if _G.flyParts.bv then _G.flyParts.bv:Destroy() end
+            if _G.flyParts.bg then _G.flyParts.bg:Destroy() end
+        end
+        _G.flyParts = nil
+    end)
+end
