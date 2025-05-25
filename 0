@@ -1,0 +1,8 @@
+_G.zhir = not _G.zhir
+if _G.zhir then
+	_G.zhir = true
+        game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 100
+else
+	_G.zhir = false
+        game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 16
+end
